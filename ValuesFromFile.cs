@@ -1,5 +1,8 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Office2010.Excel.Drawing;
+using Microsoft.Office.Interop.Excel;
+using System;
 using System.IO;
+using System.Security.Cryptography;
 using Excel = Microsoft.Office.Interop.Excel;
 
 public class ValuesFromFile
@@ -78,7 +81,7 @@ public class ValuesFromFile
         }
     }
 
-    public static void ExportToExcel()
+    public static void ExportToExcel(int ndata, DataSet var1, DataSet var2, DataSet var3)
     {
         // Create Excel application (it's like opening the program)
         Excel.Application excelApp = new Excel.Application();
@@ -89,29 +92,77 @@ public class ValuesFromFile
         // Create a local worksheet and gets the reference of the active worksheet in Excel (excelApp)
         Excel._Worksheet workSheet = (Excel._Worksheet)excelApp.ActiveSheet;
 
+        //----------------------------------------
         // Filling the worksheet with data
-        workSheet.Cells[1, "A"] = "Modelo";
-        workSheet.Cells[1, "B"] = "Fabricante";
-        workSheet.Cells[1, "C"] = "Ano";
+        //----------------------------------------
 
-        workSheet.Cells[2, "A"] = "Clio";
-        workSheet.Cells[2, "B"] = "Renault";
-        workSheet.Cells[2, "C"] = 2011;
+        // Setting "table name"
+        Excel.Range headerRange = excelApp.get_Range("A1", "C1");
+        headerRange.Merge();
+        workSheet.Cells[1, "A"] = "<Case name>";
+        headerRange.Cells.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        headerRange.Font.Bold = true;
+        headerRange.Interior.Color = System.Drawing.Color.Yellow;
 
-        workSheet.Cells[3, "A"] = "Palio";
-        workSheet.Cells[3, "B"] = "Fiat";
-        workSheet.Cells[3, "C"] = 2012;
+        // Writting headers
+        workSheet.Cells[2, "A"] = "Time (days)";
+        workSheet.Cells[2, "B"] = "Oil rate (STB/d)";
+        workSheet.Cells[2, "C"] = "Gas rate (STB/d)";
 
-        workSheet.Cells[4, "A"] = "Sentra";
-        workSheet.Cells[4, "B"] = "Nissan";
-        workSheet.Cells[4, "C"] = 2016;
+        // Writting data
+        int counter = 2;
+        for (int i = 0; i < ndata; i++)
+        {
+            counter ++;
 
-        // Formatign the data
-        workSheet.Range["A1"].AutoFormat(Excel.XlRangeAutoFormat.xlRangeAutoFormatTable1);
+            workSheet.Cells[counter, "A"] = var1.GetDataItem(i);
+            workSheet.Cells[counter, "B"] = var2.GetDataItem(i);
+            workSheet.Cells[counter, "C"] = var3.GetDataItem(i);
+        }
+
+        // Formating data range
+        string beg_range = "A3";
+        int endRow = ndata + 2;
+        string end_range = "C" + endRow;
+        Excel.Range dataRange = excelApp.get_Range(beg_range, end_range);
+        //dataRange.Cells.NumberFormat = "#######";
+
+        // Formating the data
+        //workSheet.Range["A2"].AutoFormat(Excel.XlRangeAutoFormat.xlRangeAutoFormatTable3);
+
+        //----------------------------------------
+        // Creating the chart
+        //----------------------------------------
+
+        // Creating the objects
+        var charts = workSheet.ChartObjects() as Excel.ChartObjects;
+        var chartObject = charts.Add(100, 100, 500, 200);
+        var oilChart = chartObject.Chart;
+        Excel.Chart gasChart = new Excel.Chart();
+        end_range = "A" + endRow;
+        Excel.Range timeRange = excelApp.get_Range("A3", end_range);
+        end_range = "B" + endRow;
+        Excel.Range oilRange = excelApp.get_Range("B3", end_range);
+
+        // Filling chart with data
+        oilChart.SetSourceData(oilRange);
+        //oilChart.
+
+        // Setting chart type
+        oilChart.ChartType = Excel.XlChartType.xlXYScatterSmoothNoMarkers;
+
+
+        // Another approach
+        //Excel.Series oilSeries = null;
+        //Excel.Shape _Shape = workSheet.Shapes.AddChart2();
+
+        //oilSeries.XValues = dataRange;
+        //_Shape.Chart.SeriesCollection. = oilSeries;
 
         // Saving the file
         workSheet.SaveAs($@"{Environment.CurrentDirectory}\outfile.xlsx");
 
         excelApp.Quit();
+
     }
 }

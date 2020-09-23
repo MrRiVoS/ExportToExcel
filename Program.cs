@@ -24,7 +24,7 @@ namespace GetResultFromUTCOMP
             ValuesFromFile.GetData(filename, nprints, time, oil_rate, gas_rate);
 
             Console.WriteLine(" Exportign file to Excel...");
-            ValuesFromFile.ExportToExcel();
+            ValuesFromFile.ExportToExcel(nprints, time, oil_rate, gas_rate);
         }
     }
 }
